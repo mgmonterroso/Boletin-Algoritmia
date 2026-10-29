@@ -246,6 +246,79 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
     return lista_ordenanda;
 }
 
+hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, int *tam_actual) {
+    
+    int colisiones = 0, pos_lista_origianl, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
+    static hash_list lista_original[500];
+    hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
+    float  espacios_ocupados = 0;
+
+    *tam_actual = *Mo;
+
+    int n = leerFichero("trazas.csv", lista_original, 500);
+    if (n < 0) {
+        printf("no se pudo leer el fichero\n");
+        return NULL;
+    }
+
+    /* inicializar la lista ordenanda */
+    for (int i = 0; i < *tam_actual; i++) {
+        lista_ordenanda[i].estado = LIBRE;
+        espacios_libres++;
+    }
+
+    /* Insertar registros en la lista nueva */
+    for (int i = 0; i < *R; i++) {
+
+        /* Se ve que no este mas del 50% ocupado, si lo esta se redimensiona */
+        if ((espacios_ocupados + 1) / (float)(*tam_actual) > 0.5) {
+            tam_nuevo = *tam_actual * 2;
+            while (!calcula_primo(tam_nuevo)) {
+                tam_nuevo++;
+            } 
+            lista_ordenanda = crea_lista(lista_ordenanda, tam_actual, tam_nuevo);
+            *tam_actual = tam_nuevo;
+        }
+
+        /* Calculo de la posicion */
+        pos_original = (*P + i) % 500;
+        int j = 1;
+
+        pos_actual = lista_original[pos_original].clave % *tam_actual;
+
+        /* Verifica si esta ocupado ese lugar, en caso de estarlo prueba otro con prueba lineal */
+        while (lista_ordenanda[pos_actual].estado == OCUPADO) {
+            colisiones++;
+            pos_actual = (pos_original + (j * j)) % *tam_actual;
+            j++;
+
+            if (j > *tam_actual) {
+                tam_nuevo = *tam_actual * 2;
+                while (!calcula_primo(tam_nuevo)) {
+                    tam_nuevo++;
+                } 
+                lista_ordenanda = crea_lista(lista_ordenanda, tam_actual, tam_nuevo);
+                *tam_actual = tam_nuevo;
+            }
+        }
+
+        /* Se insertan los valores al encontrar hueco */
+        strcpy(lista_ordenanda[pos_actual].agente, lista_original[pos_original].agente);
+        strcpy(lista_ordenanda[pos_actual].herramienta, lista_original[pos_original].herramienta);
+        lista_ordenanda[pos_actual].clave = lista_original[pos_original].clave;
+        lista_ordenanda[pos_actual].id = lista_original[pos_original].id;
+        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms; 
+        lista_ordenanda[pos_actual].tokens = lista_original[pos_original].tokens;
+        lista_ordenanda[pos_actual].estado = lista_original[pos_original].estado;
+
+        espacios_ocupados++;
+    }
+
+    espacios_libres = *tam_actual - espacios_ocupados;
+
+    return lista_ordenanda;
+}
+
 void muestra_lista(hash_list *lista, int *tam_lista) {
 
     if (lista == NULL)
@@ -321,10 +394,11 @@ int main () {
 
     do {
         printf("1- Calcular los parametros del grupo\n"
-            "2- Cargar los R registros del grupo\n"
-            "3- Mostrar la lista\n"
-            "4- Mostrar factor de carga\n"
-            "5- Consultar informacion a partir de ID\n"
+            "2- Prueba lineal\n"
+            "3- Prueba cuadratica\n"
+            "4- Mostrar la lista\n"
+            "5- Mostrar factor de carga\n"
+            "6- Consultar informacion a partir de ID\n"
             "Elige una opcion o presiona 9 para salir: ");
 
         scanf("%d", &opcion);
@@ -340,23 +414,21 @@ int main () {
                 break;
 
             case 3:
-                muestra_lista(lista, &tam_tabla);
+                lista = inserta_registros_cuadratica(&R, &P, &Mo, &K, &tam_tabla);
                 break;
 
             case 4:
-                consulta_factor_carga(lista, &tam_tabla);
+                muestra_lista(lista, &tam_tabla);
                 break;
 
             case 5:
-                printf("Introduce el ID a consultar: ");
-                scanf("%lld", &id);
-                consulta_por_id(lista, id);
+                consulta_factor_carga(lista, &tam_tabla);
                 break;
 
             case 6:
-                printf("Introduce el ID a borrar: ");
+                printf("Introduce el ID a consultar: ");
                 scanf("%lld", &id);
-                borrar_por_id(lista, id);
+                consulta_por_id(lista, id);
                 break;
 
             case 9: break;
