@@ -1,0 +1,5 @@
+# Ejecutables
+*.exe
+
+# Archivos temporales de Code Runner
+tempCodeRunnerFile.c
