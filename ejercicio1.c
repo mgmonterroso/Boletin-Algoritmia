@@ -20,12 +20,12 @@ typedef struct {
 
 int calcula_primo (int primo) {
 
-   for (int i = 2; i * i < primo; i++) {
+    for (int i = 2; i * i <= primo; i++) {
       if (primo % i == 0)
         return 0;
-   }
+    }
 
-   return 1;
+    return 1;
 }
 
 int leerFichero(const char *nombre_fichero, hash_list *ej, int max_ej)
@@ -63,7 +63,7 @@ int leerFichero(const char *nombre_fichero, hash_list *ej, int max_ej)
     return n;
 }
 
-void calcula_parametros(int *R, int *P, int *Mo, long long *K) {
+void calcula_parametros(int *R, int *P, int *Mo, long long *K, int *M_ch) {
 
     char linea[60];
     int NN, num_sur_uno, num_sur_dos, num_sur_tres;
@@ -141,12 +141,13 @@ void calcula_parametros(int *R, int *P, int *Mo, long long *K) {
     *P = *K % 500;
     *Mo = 300 + (*K % 200); 
     while (!calcula_primo(*Mo)) {
-        *Mo++;
+        (*Mo)++;
     } 
+    *M_ch = 100 + (*K % 50);
 
     printf("numero de grupo e iniciales: %lld - %s - %s - %s\n", NN, ini_uno, ini_dos, ini_tres);
     // printf("Valores: %d - %d - %d - K: %lld\n", num_sur_uno, num_sur_dos, num_sur_tres, *K);
-    printf("Parametros: K: %lld - R: %d - P: %d - Mo: %d\n", *K, *R, *P, *Mo);
+    printf("Parametros: K: %lld - R: %d - P: %d - Mo: %d - M_ch: %d\n", *K, *R, *P, *Mo, *M_ch);
 
     return;
 }
@@ -175,7 +176,7 @@ hash_list* crea_lista (hash_list *lista_vieja, int *tam_viejo, int tam_nuevo) {
 
 hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *tam_actual) {
     
-    int colisiones = 0, pos_lista_origianl, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
+    int colisiones = 0, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
     static hash_list lista_original[500];
     hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
     float  espacios_ocupados = 0;
@@ -319,6 +320,84 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
     return lista_ordenanda;
 }
 
+hash_list* inserta_registros_dependiente_clave(int *R, int *P, long long *K, int *tam_actual) {
+
+    float alpha = 1;
+    int colisiones = 0, pos_original, pos_actual, espacios_libres = 0, espacios_ocupados = 0, paso;
+    static hash_list lista_original[500];
+
+    int n = leerFichero("trazas.csv", lista_original, 500);
+    if (n < 0) {
+        printf("no se pudo leer el fichero\n");
+        return NULL;
+    }
+
+    *tam_actual = *R; // el tamaño inicial no va a ser mas pequeño que la cantidad de registros a meter
+
+    /* Hcaemos que el tamaño sea primo */
+    while (!calcula_primo(*tam_actual)) {
+        (*tam_actual)++;
+    } 
+
+    /* el factor de carga (alpha) tiene que ser menor a 0.5 para comenzar a inisertar */
+    while (alpha >= 0.5) {
+
+        (*tam_actual)++; // aumentamos el tamaño para buscar el siguiente primo
+
+        while (!calcula_primo(*tam_actual)) {
+            (*tam_actual)++;
+        }
+        alpha = (float)(*R) / (float)(*tam_actual); // actualizamos alpha
+    }
+
+
+    hash_list *lista_ordenanda = malloc(*tam_actual * sizeof(hash_list));
+
+    /* inicializar la lista ordenanda */
+    for (int i = 0; i < *tam_actual; i++) {
+        lista_ordenanda[i].estado = LIBRE;
+        espacios_libres++;
+    }
+
+
+    paso = 1 + (*K % (*tam_actual - 2)); // como el tamaño no cambia podemos calcular el paso antes de empezar a recorrer
+
+    for (int i = 0; i < *R; i++) {
+
+        pos_original = (*P + i) % 500;
+        int j = 1;
+
+        pos_actual = lista_original[pos_original].clave % *tam_actual;
+
+        while (lista_ordenanda[pos_actual].estado == OCUPADO) {
+            colisiones++;
+            pos_actual = (pos_original + j * paso) % *tam_actual;
+            j++;
+
+            // (H(k) + i · paso(k)) mod M, con paso(k) = 1 + (k mod (M − 2)).
+
+            if (j > *tam_actual) {
+                printf("SIN ESPACIO\n");
+                break;
+            }            
+        }
+
+        /* Se insertan los valores al encontrar hueco */
+        strcpy(lista_ordenanda[pos_actual].agente, lista_original[pos_original].agente);
+        strcpy(lista_ordenanda[pos_actual].herramienta, lista_original[pos_original].herramienta);
+        lista_ordenanda[pos_actual].clave = lista_original[pos_original].clave;
+        lista_ordenanda[pos_actual].id = lista_original[pos_original].id;
+        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms; 
+        lista_ordenanda[pos_actual].tokens = lista_original[pos_original].tokens;
+        lista_ordenanda[pos_actual].estado = lista_original[pos_original].estado;
+    }
+
+    espacios_libres = *tam_actual - espacios_ocupados;
+
+    return lista_ordenanda;
+
+}
+
 void muestra_lista(hash_list *lista, int *tam_lista) {
 
     if (lista == NULL)
@@ -346,7 +425,7 @@ void consulta_factor_carga(hash_list *lista, int *tam_tabla) {
 
     alpha = registros_ocupados / (float)(*tam_tabla);
 
-    printf("El factor de carga es: %.2f\n", alpha);
+    printf("El factor de carga es: %.4f\n", alpha);
 
     return;
 }
@@ -388,17 +467,17 @@ int main () {
     int opcion, tam_tabla = 0;
     /* parametros del grupo */
     long long K = 0, id;
-    int R = 0, P = 0, Mo = 0;
-    // int M_ch = 0;
+    int R = 0, P = 0, Mo = 0, M_ch = 0;
     hash_list *lista;
 
     do {
         printf("1- Calcular los parametros del grupo\n"
-            "2- Prueba lineal\n"
-            "3- Prueba cuadratica\n"
-            "4- Mostrar la lista\n"
-            "5- Mostrar factor de carga\n"
-            "6- Consultar informacion a partir de ID\n"
+            "2- Prueba lineal con redispersion\n"
+            "3- Prueba cuadratica con redispersion\n"
+            "4- Exploracion dependiente de la clave\n"
+            "5- Mostrar lista\n"
+            "6- Mostrar factor de carga\n"
+            "7- Consultar informacion a partir de ID\n"
             "Elige una opcion o presiona 9 para salir: ");
 
         scanf("%d", &opcion);
@@ -406,7 +485,7 @@ int main () {
 
         switch (opcion) {
             case 1:
-                calcula_parametros(&R, &P, &Mo, &K);
+                calcula_parametros(&R, &P, &Mo, &K, &M_ch);
                 break;
 
             case 2:
@@ -418,14 +497,18 @@ int main () {
                 break;
 
             case 4:
-                muestra_lista(lista, &tam_tabla);
+                lista = inserta_registros_dependiente_clave(&R, &P, &K, &tam_tabla);
                 break;
 
             case 5:
-                consulta_factor_carga(lista, &tam_tabla);
+                muestra_lista(lista, &tam_tabla);
                 break;
 
             case 6:
+                consulta_factor_carga(lista, &tam_tabla);
+                break;
+
+            case 7:
                 printf("Introduce el ID a consultar: ");
                 scanf("%lld", &id);
                 consulta_por_id(lista, id);
