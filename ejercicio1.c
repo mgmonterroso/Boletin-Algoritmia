@@ -2,6 +2,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include <time.h>
 
 #define MAX_TEXTO 100
 #define LIBRE     0
@@ -152,33 +153,100 @@ void calcula_parametros(int *R, int *P, int *Mo, long long *K, int *M_ch) {
     return;
 }
 
-hash_list* crea_lista (hash_list *lista_vieja, int *tam_viejo, int tam_nuevo) {
+hash_list* crea_lista_lineal (hash_list *lista_vieja, int *tam_viejo, int tam_nuevo) {
 
+    int pos_original, pos_actual, colisiones = 0;
     hash_list *lista_nueva = malloc (tam_nuevo * sizeof(hash_list));
+
+    if (lista_nueva == NULL) {
+        return NULL;
+    }
 
     for (int i = 0; i < tam_nuevo; i++) {
         lista_nueva[i].estado = LIBRE;
     }
 
     for (int i = 0; i < *tam_viejo; i++) {
-        strcpy(lista_nueva[i].agente, lista_vieja[i].agente);
-        strcpy(lista_nueva[i].herramienta, lista_vieja[i].herramienta);
-        lista_nueva[i].clave = lista_vieja[i].clave;
-        lista_nueva[i].id = lista_vieja[i].id;
-        lista_nueva[i].latencia_ms = lista_vieja[i].latencia_ms;
-        lista_nueva[i].tokens = lista_vieja[i].tokens;
-        lista_nueva[i].estado = lista_vieja[i].estado;
+
+        if (lista_vieja[i].estado == OCUPADO) {
+            pos_original = lista_vieja[i].clave % tam_nuevo;
+            int j = 1;
+
+            pos_actual = pos_original;
+
+            while (lista_nueva[pos_actual].estado == OCUPADO) {
+                pos_actual = (pos_original + j) % tam_nuevo;
+                j++;
+                colisiones++;
+            }
+
+            strcpy(lista_nueva[pos_actual].agente, lista_vieja[i].agente);
+            strcpy(lista_nueva[pos_actual].herramienta, lista_vieja[i].herramienta);
+            lista_nueva[pos_actual].clave = lista_vieja[i].clave;
+            lista_nueva[pos_actual].id = lista_vieja[i].id;
+            lista_nueva[pos_actual].latencia_ms = lista_vieja[i].latencia_ms;
+            lista_nueva[pos_actual].tokens = lista_vieja[i].tokens;
+            lista_nueva[pos_actual].estado = OCUPADO;
+        }
     }
 
-    // printf("Se creo una nueva lista\n");
+    free(lista_vieja);
+    
+    return lista_nueva;
+}
+
+hash_list* crea_lista_cuadratica (hash_list *lista_vieja, int *tam_viejo, int tam_nuevo) {
+
+    int pos_original, pos_actual, colisiones = 0;
+    hash_list *lista_nueva = malloc (tam_nuevo * sizeof(hash_list));
+
+    if (lista_nueva == NULL) {
+        return NULL;
+    }
+
+    for (int i = 0; i < tam_nuevo; i++) {
+        lista_nueva[i].estado = LIBRE;
+    }
+
+    for (int i = 0; i < *tam_viejo; i++) {
+
+        if (lista_vieja[i].estado == OCUPADO) {
+            pos_original = lista_vieja[i].clave % tam_nuevo;
+            int j = 1;
+
+            pos_actual = pos_original;
+
+            while (lista_nueva[pos_actual].estado == OCUPADO) {
+                pos_actual = (pos_original + (j * j)) % tam_nuevo;
+                j++;
+                colisiones++;
+            }
+
+            strcpy(lista_nueva[pos_actual].agente, lista_vieja[i].agente);
+            strcpy(lista_nueva[pos_actual].herramienta, lista_vieja[i].herramienta);
+            lista_nueva[pos_actual].clave = lista_vieja[i].clave;
+            lista_nueva[pos_actual].id = lista_vieja[i].id;
+            lista_nueva[pos_actual].latencia_ms = lista_vieja[i].latencia_ms;
+            lista_nueva[pos_actual].tokens = lista_vieja[i].tokens;
+            lista_nueva[pos_actual].estado = OCUPADO;
+        }
+    }
+
+    free(lista_vieja);
+    
     return lista_nueva;
 }
 
 hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *tam_actual, hash_list *lista_original) {
     
     int colisiones = 0, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
-    hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
     float  espacios_ocupados = 0;
+    hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
+
+    if (lista_ordenanda == NULL) {
+        printf("Problema al reservar espacio\n");
+        return NULL;
+    }
 
     *tam_actual = *Mo;
 
@@ -197,7 +265,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
             while (!calcula_primo(tam_nuevo)) {
                 tam_nuevo++;
             } 
-            lista_ordenanda = crea_lista(lista_ordenanda, tam_actual, tam_nuevo);
+            lista_ordenanda = crea_lista_lineal(lista_ordenanda, tam_actual, tam_nuevo);
             *tam_actual = tam_nuevo;
         }
 
@@ -218,7 +286,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
                 while (!calcula_primo(tam_nuevo)) {
                     tam_nuevo++;
                 } 
-                lista_ordenanda = crea_lista(lista_ordenanda, tam_actual, tam_nuevo);
+                lista_ordenanda = crea_lista_lineal(lista_ordenanda, tam_actual, tam_nuevo);
                 *tam_actual = tam_nuevo;
             }
         }
@@ -243,8 +311,13 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
 hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, int *tam_actual, hash_list *lista_original) {
     
     int colisiones = 0, pos_lista_origianl, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
-    hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
     float  espacios_ocupados = 0;
+    hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
+
+    if (lista_ordenanda == NULL) {
+        printf("Problema al reservar espacio\n");
+        return NULL;
+    }
 
     *tam_actual = *Mo;
 
@@ -263,7 +336,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
             while (!calcula_primo(tam_nuevo)) {
                 tam_nuevo++;
             } 
-            lista_ordenanda = crea_lista(lista_ordenanda, tam_actual, tam_nuevo);
+            lista_ordenanda = crea_lista_cuadratica(lista_ordenanda, tam_actual, tam_nuevo);
             *tam_actual = tam_nuevo;
         }
 
@@ -284,7 +357,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
                 while (!calcula_primo(tam_nuevo)) {
                     tam_nuevo++;
                 } 
-                lista_ordenanda = crea_lista(lista_ordenanda, tam_actual, tam_nuevo);
+                lista_ordenanda = crea_lista_cuadratica(lista_ordenanda, tam_actual, tam_nuevo);
                 *tam_actual = tam_nuevo;
             }
         }
@@ -384,9 +457,9 @@ void muestra_lista(hash_list *lista, int *tam_lista) {
 
     for (int i = 0; i < *tam_lista; i++) {
         if (lista[i].estado == OCUPADO) {
-            printf("%d: %lld\t", i, lista[i].id);
+            printf("Posicion: %d - Clave: %lld\n", i, lista[i].clave);
         } else {
-            printf("%d: LIBRE\t", i);
+            printf("%d: LIBRE\n", i);
         }
     }
 
