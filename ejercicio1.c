@@ -174,20 +174,13 @@ hash_list* crea_lista (hash_list *lista_vieja, int *tam_viejo, int tam_nuevo) {
     return lista_nueva;
 }
 
-hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *tam_actual) {
+hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *tam_actual, hash_list *lista_original) {
     
     int colisiones = 0, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
-    static hash_list lista_original[500];
     hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
     float  espacios_ocupados = 0;
 
     *tam_actual = *Mo;
-
-    int n = leerFichero("trazas.csv", lista_original, 500);
-    if (n < 0) {
-        printf("no se pudo leer el fichero\n");
-        return NULL;
-    }
 
     /* inicializar la lista ordenanda */
     for (int i = 0; i < *tam_actual; i++) {
@@ -247,20 +240,13 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
     return lista_ordenanda;
 }
 
-hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, int *tam_actual) {
+hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, int *tam_actual, hash_list *lista_original) {
     
     int colisiones = 0, pos_lista_origianl, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
-    static hash_list lista_original[500];
     hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
     float  espacios_ocupados = 0;
 
     *tam_actual = *Mo;
-
-    int n = leerFichero("trazas.csv", lista_original, 500);
-    if (n < 0) {
-        printf("no se pudo leer el fichero\n");
-        return NULL;
-    }
 
     /* inicializar la lista ordenanda */
     for (int i = 0; i < *tam_actual; i++) {
@@ -320,17 +306,10 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
     return lista_ordenanda;
 }
 
-hash_list* inserta_registros_dependiente_clave(int *R, int *P, long long *K, int *tam_actual) {
+hash_list* inserta_registros_dependiente_clave(int *R, int *P, long long *K, int *tam_actual, hash_list *lista_original) {
 
     float alpha = 1;
     int colisiones = 0, pos_original, pos_actual, espacios_libres = 0, espacios_ocupados = 0, paso;
-    static hash_list lista_original[500];
-
-    int n = leerFichero("trazas.csv", lista_original, 500);
-    if (n < 0) {
-        printf("no se pudo leer el fichero\n");
-        return NULL;
-    }
 
     *tam_actual = *R; // el tamaño inicial no va a ser mas pequeño que la cantidad de registros a meter
 
@@ -404,8 +383,11 @@ void muestra_lista(hash_list *lista, int *tam_lista) {
         printf("La lista no existe\n");
 
     for (int i = 0; i < *tam_lista; i++) {
-        if (lista[i].estado == OCUPADO) 
-            printf("ID: %lld\t", lista[i].id);
+        if (lista[i].estado == OCUPADO) {
+            printf("%d: %lld\t", i, lista[i].id);
+        } else {
+            printf("%d: LIBRE\t", i);
+        }
     }
 
     return;
@@ -469,6 +451,13 @@ int main () {
     long long K = 0, id;
     int R = 0, P = 0, Mo = 0, M_ch = 0;
     hash_list *lista;
+    static hash_list lista_original[500];
+
+    int n = leerFichero("trazas.csv", lista_original, 500);
+    if (n < 0) {
+        printf("no se pudo leer el fichero\n");
+        return 1;
+    }
 
     do {
         printf("1- Calcular los parametros del grupo\n"
@@ -489,15 +478,15 @@ int main () {
                 break;
 
             case 2:
-                lista = inserta_registros_lineal(&R, &P, &Mo, &K, &tam_tabla);
+                lista = inserta_registros_lineal(&R, &P, &Mo, &K, &tam_tabla, lista_original);
                 break;
 
             case 3:
-                lista = inserta_registros_cuadratica(&R, &P, &Mo, &K, &tam_tabla);
+                lista = inserta_registros_cuadratica(&R, &P, &Mo, &K, &tam_tabla, lista_original);
                 break;
 
             case 4:
-                lista = inserta_registros_dependiente_clave(&R, &P, &K, &tam_tabla);
+                lista = inserta_registros_dependiente_clave(&R, &P, &K, &tam_tabla, lista_original);
                 break;
 
             case 5:
