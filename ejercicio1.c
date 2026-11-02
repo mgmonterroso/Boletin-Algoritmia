@@ -2,12 +2,11 @@
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include <time.h>
 
 #define MAX_TEXTO 100
 #define LIBRE     0
 #define OCUPADO   1
-#define BORRADO   -1
+#define BORRADO   2
 
 typedef struct {
     int       clave;               /* 9 ultimas cifras del ID (ID mod 10^9) */
@@ -261,7 +260,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
 
         /* Se ve que no este mas del 50% ocupado, si lo esta se redimensiona */
         if ((espacios_ocupados + 1) / (float)(*tam_actual) > 0.5) {
-            tam_nuevo = *tam_actual * 2;
+            tam_nuevo = (*tam_actual) * 2;
             while (!calcula_primo(tam_nuevo)) {
                 tam_nuevo++;
             } 
@@ -273,16 +272,16 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
         pos_original = (*P + i) % 500;
         int j = 1;
 
-        pos_actual = lista_original[pos_original].clave % *tam_actual;
+        pos_actual = lista_original[pos_original].clave % (*tam_actual);
 
         /* Verifica si esta ocupado ese lugar, en caso de estarlo prueba otro con prueba lineal */
         while (lista_ordenanda[pos_actual].estado == OCUPADO) {
             colisiones++;
-            pos_actual = (pos_original + j) % *tam_actual;
+            pos_actual = (pos_original + j) % (*tam_actual);
             j++;
 
-            if (j > *tam_actual) {
-                tam_nuevo = *tam_actual * 2;
+            if (j > (*tam_actual)) {
+                tam_nuevo = (*tam_actual) * 2;
                 while (!calcula_primo(tam_nuevo)) {
                     tam_nuevo++;
                 } 
@@ -303,7 +302,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
         espacios_ocupados++;
     }
 
-    espacios_libres = *tam_actual - espacios_ocupados;
+    espacios_libres = (*tam_actual) - espacios_ocupados;
 
     return lista_ordenanda;
 }
@@ -322,7 +321,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
     *tam_actual = *Mo;
 
     /* inicializar la lista ordenanda */
-    for (int i = 0; i < *tam_actual; i++) {
+    for (int i = 0; i < (*tam_actual); i++) {
         lista_ordenanda[i].estado = LIBRE;
         espacios_libres++;
     }
@@ -332,7 +331,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
 
         /* Se ve que no este mas del 50% ocupado, si lo esta se redimensiona */
         if ((espacios_ocupados + 1) / (float)(*tam_actual) > 0.5) {
-            tam_nuevo = *tam_actual * 2;
+            tam_nuevo = (*tam_actual) * 2;
             while (!calcula_primo(tam_nuevo)) {
                 tam_nuevo++;
             } 
@@ -344,16 +343,16 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
         pos_original = (*P + i) % 500;
         int j = 1;
 
-        pos_actual = lista_original[pos_original].clave % *tam_actual;
+        pos_actual = lista_original[pos_original].clave % (*tam_actual);
 
         /* Verifica si esta ocupado ese lugar, en caso de estarlo prueba otro con prueba lineal */
         while (lista_ordenanda[pos_actual].estado == OCUPADO) {
             colisiones++;
-            pos_actual = (pos_original + (j * j)) % *tam_actual;
+            pos_actual = (pos_original + (j * j)) % (*tam_actual);
             j++;
 
-            if (j > *tam_actual) {
-                tam_nuevo = *tam_actual * 2;
+            if (j > (*tam_actual)) {
+                tam_nuevo = (*tam_actual) * 2;
                 while (!calcula_primo(tam_nuevo)) {
                     tam_nuevo++;
                 } 
@@ -374,7 +373,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
         espacios_ocupados++;
     }
 
-    espacios_libres = *tam_actual - espacios_ocupados;
+    espacios_libres = (*tam_actual) - espacios_ocupados;
 
     return lista_ordenanda;
 }
@@ -485,34 +484,32 @@ void consulta_factor_carga(hash_list *lista, int *tam_tabla) {
     return;
 }
 
-void consulta_por_id(hash_list *lista, long long id) {
-
-    int i = 0;
+void consulta_por_id(hash_list *lista, long long id, int *tam) {
 
     if (lista == NULL)
         printf("La lista no existe\n");
 
-    while (lista[i].id != id) {
-        i++;
+    for (int i = 0; i < *tam; i++) {
+        if (lista[i].id == id) {
+            printf("pos: %d - Agente: %s\n", i, lista[i].agente);
+            break;
+        }
     }
-
-    printf("Agente: %s\n", lista[i].agente);
 
     return;
 }
 
-void borrar_por_id(hash_list *lista, long long id) {
-
-    int i = 0;
+void borrar_por_id(hash_list *lista, long long id, int *tam) {
 
     if (lista == NULL)
         printf("La lista no existe\n");
 
-    while (lista[i].id != id) {
-        i++;
+    for (int i = 0; i < *tam; i++) {
+        if (lista[i].id == id) {
+            lista[i].estado = BORRADO;
+            break;
+        }
     }
-
-    lista[i].estado = BORRADO;
 
     return;
 }
@@ -540,6 +537,7 @@ int main () {
             "5- Mostrar lista\n"
             "6- Mostrar factor de carga\n"
             "7- Consultar informacion a partir de ID\n"
+            "8- Borrar registro a partir de ID\n"
             "Elige una opcion o presiona 9 para salir: ");
 
         scanf("%d", &opcion);
@@ -571,9 +569,15 @@ int main () {
                 break;
 
             case 7:
-                printf("Introduce el ID a consultar: ");
+                printf("Introduce el ID del registro a consultar: ");
                 scanf("%lld", &id);
-                consulta_por_id(lista, id);
+                consulta_por_id(lista, id, &tam_tabla);
+                break;
+
+            case 8:
+                printf("Introduce el ID del registro a borrar: ");
+                scanf("%lld", &id);
+                borrar_por_id(lista, id, &tam_tabla);
                 break;
 
             case 9: break;
