@@ -18,6 +18,12 @@ typedef struct {
     int       estado;
 } hash_list;
 
+typedef struct nodo{
+    hash_list registro;
+    struct nodo *siguiente;
+
+} nodo;
+
 int calcula_primo (int primo) {
 
     for (int i = 2; i * i <= primo; i++) {
@@ -82,13 +88,13 @@ void calcula_parametros(int *R, int *P, int *Mo, long long *K, int *M_ch) {
     sur_tres = strtok(NULL, " ");
 
     /* Ponemos apellidos en mayusculas y ordenamos alfabeticamente */
-    for (int i = 0; sur_uno[i] != '\0'; i++) 
+    for (int i = 0; sur_uno[i] != '\0'; i++)
         sur_uno[i] = toupper(sur_uno[i]);
 
-    for (int i = 0; sur_dos[i] != '\0'; i++) 
+    for (int i = 0; sur_dos[i] != '\0'; i++)
         sur_dos[i] = toupper(sur_dos[i]);
 
-    for (int i = 0; sur_tres[i] != '\0'; i++) 
+    for (int i = 0; sur_tres[i] != '\0'; i++)
         sur_tres[i] = toupper(sur_tres[i]);
 
     if (strcmp(sur_uno, sur_dos) > 0) {
@@ -108,7 +114,7 @@ void calcula_parametros(int *R, int *P, int *Mo, long long *K, int *M_ch) {
         sur_uno = sur_dos;
         sur_dos = temp;
     }
-    
+
     /* separar las primeras dos inciales */
     for (int i = 0; i < 2; i++) {
         ini_uno[i] = sur_uno[i];
@@ -139,10 +145,10 @@ void calcula_parametros(int *R, int *P, int *Mo, long long *K, int *M_ch) {
     /* Calcular el resto de parametros */
     *R = 400 + 5 * (*K % 20);
     *P = *K % 500;
-    *Mo = 300 + (*K % 200); 
+    *Mo = 300 + (*K % 200);
     while (!calcula_primo(*Mo)) {
         (*Mo)++;
-    } 
+    }
     *M_ch = 100 + (*K % 50);
 
     printf("numero de grupo e iniciales: %lld - %s - %s - %s\n", NN, ini_uno, ini_dos, ini_tres);
@@ -190,7 +196,7 @@ hash_list* crea_lista_lineal (hash_list *lista_vieja, int *tam_viejo, int tam_nu
     }
 
     free(lista_vieja);
-    
+
     return lista_nueva;
 }
 
@@ -232,12 +238,12 @@ hash_list* crea_lista_cuadratica (hash_list *lista_vieja, int *tam_viejo, int ta
     }
 
     free(lista_vieja);
-    
+
     return lista_nueva;
 }
 
 hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *tam_actual, hash_list *lista_original) {
-    
+
     int colisiones = 0, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
     float  espacios_ocupados = 0;
     hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
@@ -263,7 +269,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
             tam_nuevo = (*tam_actual) * 2;
             while (!calcula_primo(tam_nuevo)) {
                 tam_nuevo++;
-            } 
+            }
             lista_ordenanda = crea_lista_lineal(lista_ordenanda, tam_actual, tam_nuevo);
             *tam_actual = tam_nuevo;
         }
@@ -284,7 +290,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
                 tam_nuevo = (*tam_actual) * 2;
                 while (!calcula_primo(tam_nuevo)) {
                     tam_nuevo++;
-                } 
+                }
                 lista_ordenanda = crea_lista_lineal(lista_ordenanda, tam_actual, tam_nuevo);
                 *tam_actual = tam_nuevo;
             }
@@ -295,7 +301,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
         strcpy(lista_ordenanda[pos_actual].herramienta, lista_original[pos_original].herramienta);
         lista_ordenanda[pos_actual].clave = lista_original[pos_original].clave;
         lista_ordenanda[pos_actual].id = lista_original[pos_original].id;
-        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms; 
+        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms;
         lista_ordenanda[pos_actual].tokens = lista_original[pos_original].tokens;
         lista_ordenanda[pos_actual].estado = lista_original[pos_original].estado;
 
@@ -308,7 +314,7 @@ hash_list* inserta_registros_lineal(int *R, int *P, int *Mo, long long *K, int *
 }
 
 hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, int *tam_actual, hash_list *lista_original) {
-    
+
     int colisiones = 0, pos_lista_origianl, pos_actual, pos_original, tam_nuevo, espacios_libres = 0;
     float  espacios_ocupados = 0;
     hash_list *lista_ordenanda = malloc(*Mo * sizeof(hash_list));
@@ -334,7 +340,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
             tam_nuevo = (*tam_actual) * 2;
             while (!calcula_primo(tam_nuevo)) {
                 tam_nuevo++;
-            } 
+            }
             lista_ordenanda = crea_lista_cuadratica(lista_ordenanda, tam_actual, tam_nuevo);
             *tam_actual = tam_nuevo;
         }
@@ -355,7 +361,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
                 tam_nuevo = (*tam_actual) * 2;
                 while (!calcula_primo(tam_nuevo)) {
                     tam_nuevo++;
-                } 
+                }
                 lista_ordenanda = crea_lista_cuadratica(lista_ordenanda, tam_actual, tam_nuevo);
                 *tam_actual = tam_nuevo;
             }
@@ -366,7 +372,7 @@ hash_list* inserta_registros_cuadratica(int *R, int *P, int *Mo, long long *K, i
         strcpy(lista_ordenanda[pos_actual].herramienta, lista_original[pos_original].herramienta);
         lista_ordenanda[pos_actual].clave = lista_original[pos_original].clave;
         lista_ordenanda[pos_actual].id = lista_original[pos_original].id;
-        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms; 
+        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms;
         lista_ordenanda[pos_actual].tokens = lista_original[pos_original].tokens;
         lista_ordenanda[pos_actual].estado = lista_original[pos_original].estado;
 
@@ -388,7 +394,7 @@ hash_list* inserta_registros_dependiente_clave(int *R, int *P, long long *K, int
     /* Hcaemos que el tamaño sea primo */
     while (!calcula_primo(*tam_actual)) {
         (*tam_actual)++;
-    } 
+    }
 
     /* el factor de carga (alpha) tiene que ser menor a 0.5 para comenzar a inisertar */
     while (alpha >= 0.5) {
@@ -430,7 +436,7 @@ hash_list* inserta_registros_dependiente_clave(int *R, int *P, long long *K, int
             if (j > *tam_actual) {
                 printf("SIN ESPACIO\n");
                 break;
-            }            
+            }
         }
 
         /* Se insertan los valores al encontrar hueco */
@@ -438,7 +444,7 @@ hash_list* inserta_registros_dependiente_clave(int *R, int *P, long long *K, int
         strcpy(lista_ordenanda[pos_actual].herramienta, lista_original[pos_original].herramienta);
         lista_ordenanda[pos_actual].clave = lista_original[pos_original].clave;
         lista_ordenanda[pos_actual].id = lista_original[pos_original].id;
-        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms; 
+        lista_ordenanda[pos_actual].latencia_ms = lista_original[pos_original].latencia_ms;
         lista_ordenanda[pos_actual].tokens = lista_original[pos_original].tokens;
         lista_ordenanda[pos_actual].estado = lista_original[pos_original].estado;
     }
@@ -514,6 +520,181 @@ void borrar_por_id(hash_list *lista, long long id, int *tam) {
     return;
 }
 
+void listaenlazada(int R, int P, int m_ch, hash_list *lista_original) {
+
+    // Comprobamos que se haya ejecutado: 1.CALCULO DE PARAMETROS
+    if (m_ch <= 0 || R <= 0) {
+        printf("Primero debes calcular los parametros.\n");
+        return;
+    }
+
+    // Reservamos memoria para el array de punteros
+    nodo **lista = malloc(m_ch * sizeof(nodo *));
+
+    if (lista == NULL) {
+        printf("Error al reservar memoria\n");
+        return;
+    }
+
+    // Inicializa todas las listas a NULL
+    for (int i = 0; i < m_ch; i++) {
+        lista[i] = NULL;
+    }
+
+    int enc_M = m_ch;
+    int enc_accesos = 0;
+    int enc_insertados = 0;
+    int enc_maxlong = 0;
+    int error_memoria = 0;
+
+    // Recorrer los R registros empezando en P
+    for (int i = 0; i < R; i++) {
+
+        // Posicion del registro en el CSV
+        int posicion = (P + i) % 500;
+
+        // Calcula indice hash
+        int indice_hash = lista_original[posicion].clave % m_ch;
+
+        // SI LISTA VACIA
+        if (lista[indice_hash] == NULL) {
+
+            nodo *nuevo = malloc(sizeof(nodo));
+
+            if (nuevo == NULL) {
+                printf("Error al reservar memoria\n");
+                error_memoria = 1;
+                break;
+            }
+
+            nuevo->registro = lista_original[posicion];
+            nuevo->siguiente = NULL;
+
+            // Inserta el primer nodo
+            lista[indice_hash] = nuevo;
+
+            enc_insertados++;
+
+        } else {
+
+            // SI LISTA NO ESTA VACIA
+
+            nodo *actual = lista[indice_hash];
+            nodo *ultimo = NULL;
+
+            int encontrado = 0;
+
+
+            while (actual != NULL) {
+
+                // Contar cada nodo visitado
+                enc_accesos++;
+
+                // Comprueba si la clave ya existe
+                if (actual->registro.clave ==
+                    lista_original[posicion].clave) {
+
+                    encontrado = 1;
+                }
+
+                // Guarda el ultimo nodo visitado
+                ultimo = actual;
+
+                // Avanza al siguiente nodo
+                actual = actual->siguiente;
+            }
+
+            // Inserta si no esta repetido
+            if (encontrado == 0) {
+
+                nodo *nuevo = malloc(sizeof(nodo));
+
+                if (nuevo == NULL) {
+                    printf("Error al reservar memoria\n");
+                    error_memoria = 1;
+                    break;
+                }
+
+                nuevo->registro = lista_original[posicion];
+                nuevo->siguiente = NULL;
+
+                // Enlaza con el ultimo nodo
+                ultimo->siguiente = nuevo;
+
+                enc_insertados++;
+            }
+        }
+    }
+
+    // ESTADISTICAS
+    if (error_memoria == 0) {
+
+        // Factor de carga
+        float enc_alpha = (float) enc_insertados / m_ch;
+
+        // longitud máxima
+        for (int i = 0; i < m_ch; i++) {
+
+            int longitud = 0;
+            nodo *actual = lista[i];
+
+            while (actual != NULL) {
+                longitud++;
+                actual = actual->siguiente;
+            }
+
+            if (longitud > enc_maxlong) {
+                enc_maxlong = longitud;
+            }
+        }
+
+        // Muestra resultados
+        printf("\n--- ENCADENAMIENTO ---\n");
+        printf("enc_M: %d\n", enc_M);
+        printf("enc_accesos: %d\n", enc_accesos);
+        printf("enc_maxlong: %d\n", enc_maxlong);
+        printf("enc_alpha: %.4f\n", enc_alpha);
+    }
+
+    // MOSTRAR LIStAS
+
+    for (int i = 0; i < m_ch; i++) {
+
+        nodo *actual = lista[i];
+
+        if (lista[i] != NULL) {
+
+            printf("Lista %d: ", i);
+
+            while (actual != NULL) {
+                printf("%d -> ", actual->registro.clave);
+                actual = actual->siguiente;
+            }
+
+            printf("NULL\n");
+        }
+    }
+
+    // Recorre las listas y libera los nodos
+    for (int i = 0; i < m_ch; i++) {
+
+        nodo *actual = lista[i];
+        nodo *siguiente;
+
+        while (actual != NULL) {
+
+            // Guarda el siguiente, libera nodo actual y avanza
+            siguiente = actual->siguiente;
+            free(actual);
+            actual = siguiente;
+        }
+    }
+
+    // Libera el array de punteros
+    free(lista);
+}
+
+
 int main () {
 
     int opcion, tam_tabla = 0;
@@ -538,7 +719,8 @@ int main () {
             "6- Mostrar factor de carga\n"
             "7- Consultar informacion a partir de ID\n"
             "8- Borrar registro a partir de ID\n"
-            "Elige una opcion o presiona 9 para salir: ");
+            "9- Insertar Lista Enlazada\n"
+            "Elige una opcion o presiona 10 para salir: ");
 
         scanf("%d", &opcion);
         getchar();  // eliminar el '\0' del scanf
@@ -580,13 +762,17 @@ int main () {
                 borrar_por_id(lista, id, &tam_tabla);
                 break;
 
-            case 9: break;
+            case 9:
+                listaenlazada(R, P, M_ch, lista_original);
+                break;
+
+            case 10: break;
 
             default: printf("Opcion no valida!\n");
                 break;
         }
-    } while (opcion != 9);
-    
+    } while (opcion != 10);
+
     printf("Programa finalizado");
 
     return 0;
